@@ -2,7 +2,9 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
+	"path"
 )
 
 type Config struct {
@@ -11,7 +13,14 @@ type Config struct {
 }
 
 func Read() (Config, error) {
-	configContent, err := os.ReadFile(CONFIG_FILE_NAME)
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		return Config{}, err
+	}
+
+	configPath := path.Join(homePath, CONFIG_FILE_NAME)
+
+	configContent, err := os.ReadFile(configPath)
 	if err != nil {
 		return Config{}, err
 	}
@@ -26,12 +35,19 @@ func Read() (Config, error) {
 }
 
 func (c Config) SetUser() error {
-	jsonBytes, err := json.MarshalIndent(c, "", "\t")
+	homePath, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 
-	os.WriteFile(".gatorconfig.json", jsonBytes, 0644)
+	configPath := path.Join(homePath, CONFIG_FILE_NAME)
+
+	jsonBytes, err := json.MarshalIndent(c, "", "\t")
+	if err != nil {
+		return errors.New("failed to serialize configs to json bytes")
+	}
+
+	os.WriteFile(configPath, jsonBytes, 0644)
 
 	return nil
 }
