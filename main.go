@@ -1,9 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"gator/internal/config"
+	"gator/internal/database"
 	"os"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -15,22 +19,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Read config file
+	// Read config file into Config struct
 	cfg, err := config.Read()
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	// Connect to database
+	db, err := sql.Open("postgres", cfg.Db_url)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	// Create Queries (generated database package) instance
+	dbQueries := database.New(db)
+
 	// Create state instance
+	// and store the Queries instance into state
 	st := state{
 		config: &cfg,
+		db:     dbQueries,
 	}
 
 	// Create commands instance and register handlers
-	commands := commands{
-		callbacks: map[string]func(*state, command) error{},
-	}
-	commands.register("login", handlerLogin)
+	commands := NewCommands().
+		register("login", handlerLogin).
+		register("register", handlerRegister)
 
 	// Create command instance based on args
 	cmd := command{

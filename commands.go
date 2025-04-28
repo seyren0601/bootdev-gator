@@ -26,8 +26,14 @@ func (c *commands) run(s *state, cmd command) error {
 	return nil
 }
 
-func (c *commands) register(name string, f func(*state, command) error) error {
+func (c *commands) register(name string, f func(*state, command) error) *commands {
 	c.callbacks[name] = f
 
-	return nil
+	return c
+}
+
+func NewCommands() *commands {
+	return &commands{
+		callbacks: map[string]func(*state, command) error{},
+	}
 }
