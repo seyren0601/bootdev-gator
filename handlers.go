@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"gator/internal/config"
 	"gator/internal/database"
-	"log"
 	"time"
 )
 
@@ -32,6 +32,8 @@ func handlerLogin(s *state, cmd command) error {
 		return err
 	}
 
+	fmt.Printf("Login successfully as [%s]\n", user.Name)
+
 	return nil
 }
 
@@ -52,7 +54,7 @@ func handlerRegister(s *state, cmd command) error {
 		return err
 	}
 
-	log.Printf(`User created successfully
+	fmt.Printf(`User created successfully
 	UUID: %s
 	CreatedAt: %s
 	UpdatedAt: %s
@@ -75,7 +77,30 @@ func handlerReset(s *state, cmd command) error {
 		return err
 	}
 
-	log.Println("Reset successfully.")
+	fmt.Println("Reset successfully.")
+
+	return nil
+}
+
+func handlerUsers(s *state, cmd command) error {
+	if len(cmd.parameters) != 0 {
+		return errors.New("reset command expects 1 parameters")
+	}
+
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	currentUser := s.config.Current_user_name
+
+	for _, user := range users {
+		fmt.Printf("* %s", user.Name)
+		if user.Name == currentUser {
+			fmt.Printf(" (current)")
+		}
+		fmt.Println()
+	}
 
 	return nil
 }
