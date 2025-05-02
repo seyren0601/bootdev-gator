@@ -85,7 +85,7 @@ func handlerReset(s *state, cmd command) error {
 
 func handlerUsers(s *state, cmd command) error {
 	if len(cmd.parameters) != 0 {
-		return errors.New("reset command expects 0 parameters")
+		return errors.New("users command expects 0 parameters")
 	}
 
 	users, err := s.db.GetUsers(context.Background())
@@ -108,7 +108,7 @@ func handlerUsers(s *state, cmd command) error {
 
 func handlerAggregate(s *state, cmd command) error {
 	if len(cmd.parameters) != 0 {
-		return errors.New("reset command expects 0 parameters")
+		return errors.New("agg command expects 0 parameters")
 	}
 
 	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
@@ -123,7 +123,7 @@ func handlerAggregate(s *state, cmd command) error {
 
 func handlerAddFeed(s *state, cmd command) error {
 	if len(cmd.parameters) != 2 {
-		return errors.New("reset command expects 2 parameters: [name] [url]")
+		return errors.New("addfeed command expects 2 parameters: [name] [url]")
 	}
 
 	user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
@@ -151,6 +151,30 @@ func handlerAddFeed(s *state, cmd command) error {
 	UpdatedAt: %s
 	User: %s
 `, feed.Name.String, feed.Url.String, feed.CreatedAt.Local().String(), feed.UpdatedAt.Local().String(), user.Name)
+
+	return nil
+}
+
+func handlerShowFeeds(s *state, cmd command) error {
+	if len(cmd.parameters) != 0 {
+		return errors.New("feeds command expects 0 parameters")
+	}
+
+	feeds, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds {
+		owner, err := s.db.GetUserFromId(context.Background(), feed.UserID)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Feed name: %s\n", feed.Name.String)
+		fmt.Printf("Url: %s\n", feed.Url.String)
+		fmt.Printf("Created by: %s\n\n", owner.Name)
+	}
 
 	return nil
 }

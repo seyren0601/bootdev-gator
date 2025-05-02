@@ -48,7 +48,8 @@ func main() {
 		register("reset", handlerReset).
 		register("users", handlerUsers).
 		register("agg", handlerAggregate).
-		register("addfeed", handlerAddFeed)
+		register("addfeed", handlerAddFeed).
+		register("feeds", handlerShowFeeds)
 
 	// Create command instance based on args
 	cmd := command{
