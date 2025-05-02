@@ -122,15 +122,15 @@ func handlerAggregate(s *state, cmd command) error {
 	return nil
 }
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.parameters) != 2 {
 		return errors.New("addfeed command expects 2 parameters: [name] [url]")
 	}
 
-	user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
-	if err != nil {
-		return err
-	}
+	// user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
+	// if err != nil {
+	// 	return err
+	// }
 	feedName := cmd.parameters[0]
 	url := cmd.parameters[1]
 
@@ -191,7 +191,7 @@ func handlerShowFeeds(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.parameters) != 1 {
 		return errors.New("follow command expects 1 parameters: [url]")
 	}
@@ -199,10 +199,6 @@ func handlerFollow(s *state, cmd command) error {
 	url := cmd.parameters[0]
 
 	feed, err := s.db.GetFeedByUrl(context.Background(), url)
-	if err != nil {
-		return err
-	}
-	user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
 	if err != nil {
 		return err
 	}
@@ -224,14 +220,9 @@ func handlerFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollowing(s *state, cmd command) error {
+func handlerFollowing(s *state, cmd command, user database.User) error {
 	if len(cmd.parameters) != 0 {
 		return errors.New("following command expects 0 parameters")
-	}
-
-	user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
-	if err != nil {
-		return err
 	}
 
 	follows, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
