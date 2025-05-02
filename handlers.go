@@ -64,6 +64,7 @@ func handlerRegister(s *state, cmd command) error {
 
 	s.config.Current_user_name = user.Name
 	s.config.SetUser()
+	fmt.Printf("Logged in as [%s]\n", user.Name)
 
 	return nil
 }
@@ -135,8 +136,18 @@ func handlerAddFeed(s *state, cmd command) error {
 
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
 		Name:      sql.NullString{String: feedName, Valid: true},
-		Url:       sql.NullString{String: url, Valid: true},
+		Url:       url,
 		UserID:    user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		UserID:    user.ID,
+		FeedID:    feed.ID,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	})
@@ -150,7 +161,8 @@ func handlerAddFeed(s *state, cmd command) error {
 	CreatedAt: %s
 	UpdatedAt: %s
 	User: %s
-`, feed.Name.String, feed.Url.String, feed.CreatedAt.Local().String(), feed.UpdatedAt.Local().String(), user.Name)
+[Automatically] You (%s) have followed this feed.
+`, feed.Name.String, feed.Url, feed.CreatedAt.Local().String(), feed.UpdatedAt.Local().String(), user.Name, user.Name)
 
 	return nil
 }
@@ -172,8 +184,64 @@ func handlerShowFeeds(s *state, cmd command) error {
 		}
 
 		fmt.Printf("Feed name: %s\n", feed.Name.String)
-		fmt.Printf("Url: %s\n", feed.Url.String)
+		fmt.Printf("Url: %s\n", feed.Url)
 		fmt.Printf("Created by: %s\n\n", owner.Name)
+	}
+
+	return nil
+}
+
+func handlerFollow(s *state, cmd command) error {
+	if len(cmd.parameters) != 1 {
+		return errors.New("follow command expects 1 parameters: [url]")
+	}
+
+	url := cmd.parameters[0]
+
+	feed, err := s.db.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return err
+	}
+	user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
+	if err != nil {
+		return err
+	}
+
+	follow, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		FeedID:    feed.ID,
+		UserID:    user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Follow successfully.")
+	fmt.Printf("Feed: %s\n", follow.Feedname.String)
+	fmt.Printf("User: %s\n", follow.Username)
+
+	return nil
+}
+
+func handlerFollowing(s *state, cmd command) error {
+	if len(cmd.parameters) != 0 {
+		return errors.New("following command expects 0 parameters")
+	}
+
+	user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
+	if err != nil {
+		return err
+	}
+
+	follows, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Current feed follows:")
+	for _, feed := range follows {
+		fmt.Printf("\t* %s\n", feed.FeedName.String)
 	}
 
 	return nil
