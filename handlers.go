@@ -84,7 +84,7 @@ func handlerReset(s *state, cmd command) error {
 
 func handlerUsers(s *state, cmd command) error {
 	if len(cmd.parameters) != 0 {
-		return errors.New("reset command expects 1 parameters")
+		return errors.New("reset command expects 0 parameters")
 	}
 
 	users, err := s.db.GetUsers(context.Background())
@@ -101,6 +101,21 @@ func handlerUsers(s *state, cmd command) error {
 		}
 		fmt.Println()
 	}
+
+	return nil
+}
+
+func handlerAggregate(s *state, cmd command) error {
+	if len(cmd.parameters) != 0 {
+		return errors.New("reset command expects 1 parameters")
+	}
+
+	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(feed, "\n")
 
 	return nil
 }
