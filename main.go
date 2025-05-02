@@ -44,7 +44,8 @@ func main() {
 	// Create commands instance and register handlers
 	commands := NewCommands().
 		register("login", handlerLogin).
-		register("register", handlerRegister)
+		register("register", handlerRegister).
+		register("reset", handlerReset)
 
 	// Create command instance based on args
 	cmd := command{

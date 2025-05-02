@@ -11,3 +11,6 @@ RETURNING *;
 SELECT *
 FROM users
 WHERE name = $1;
+
+-- name: DatabaseReset :exec
+DELETE FROM users;
