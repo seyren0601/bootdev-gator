@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"gator/internal/config"
@@ -16,7 +17,7 @@ type state struct {
 
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.parameters) != 1 {
-		return errors.New("login command expects 1 parameter")
+		return errors.New("login command expects 1 parameter: [username]")
 	}
 
 	username := cmd.parameters[0]
@@ -39,7 +40,7 @@ func handlerLogin(s *state, cmd command) error {
 
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.parameters) != 1 {
-		return errors.New("register command expects 1 parameters")
+		return errors.New("register command expects 1 parameters: [username]")
 	}
 
 	username := cmd.parameters[0]
@@ -69,7 +70,7 @@ func handlerRegister(s *state, cmd command) error {
 
 func handlerReset(s *state, cmd command) error {
 	if len(cmd.parameters) != 0 {
-		return errors.New("reset command expects 1 parameters")
+		return errors.New("reset command expects 0 parameters")
 	}
 
 	err := s.db.DatabaseReset(context.Background())
@@ -107,7 +108,7 @@ func handlerUsers(s *state, cmd command) error {
 
 func handlerAggregate(s *state, cmd command) error {
 	if len(cmd.parameters) != 0 {
-		return errors.New("reset command expects 1 parameters")
+		return errors.New("reset command expects 0 parameters")
 	}
 
 	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
@@ -116,6 +117,40 @@ func handlerAggregate(s *state, cmd command) error {
 	}
 
 	fmt.Print(feed, "\n")
+
+	return nil
+}
+
+func handlerAddFeed(s *state, cmd command) error {
+	if len(cmd.parameters) != 2 {
+		return errors.New("reset command expects 2 parameters: [name] [url]")
+	}
+
+	user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
+	if err != nil {
+		return err
+	}
+	feedName := cmd.parameters[0]
+	url := cmd.parameters[1]
+
+	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
+		Name:      sql.NullString{String: feedName, Valid: true},
+		Url:       sql.NullString{String: url, Valid: true},
+		UserID:    user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf(`Feed created successfully
+	Name: %s
+	Url: %s
+	CreatedAt: %s
+	UpdatedAt: %s
+	User: %s
+`, feed.Name.String, feed.Url.String, feed.CreatedAt.Local().String(), feed.UpdatedAt.Local().String(), user.Name)
 
 	return nil
 }
