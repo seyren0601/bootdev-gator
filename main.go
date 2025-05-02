@@ -43,15 +43,27 @@ func main() {
 
 	// Create commands instance and register handlers
 	commands := NewCommands().
-		register("login", handlerLogin).
-		register("register", handlerRegister).
-		register("reset", handlerReset).
-		register("users", handlerUsers).
-		register("agg", handlerAggregate).
-		register("addfeed", middlewareLoggedIn(handlerAddFeed)).
-		register("feeds", handlerShowFeeds).
-		register("follow", middlewareLoggedIn(handlerFollow)).
-		register("following", middlewareLoggedIn(handlerFollowing))
+		register("login",
+			middlewareLogging(handlerLogin)).
+		register("register",
+			middlewareLogging(handlerRegister)).
+		register("reset",
+			middlewareLogging(handlerReset)).
+		register("users",
+			middlewareLogging(handlerUsers)).
+		register("agg",
+			middlewareLogging(handlerAggregate)).
+		register("addfeed",
+			middlewareLogging(
+				middlewareLoggedIn(handlerAddFeed))).
+		register("feeds",
+			middlewareLogging(handlerShowFeeds)).
+		register("follow",
+			middlewareLogging(
+				middlewareLoggedIn(handlerFollow))).
+		register("following",
+			middlewareLogging(
+				middlewareLoggedIn(handlerFollowing)))
 
 	// Create command instance based on args
 	cmd := command{
