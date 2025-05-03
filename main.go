@@ -52,7 +52,8 @@ func main() {
 		register("users",
 			middlewareLogging(handlerUsers)).
 		register("agg",
-			middlewareLogging(handlerAggregate)).
+			middlewareLogging(
+				middlewareLoggedIn(handlerAggregate))).
 		register("addfeed",
 			middlewareLogging(
 				middlewareLoggedIn(handlerAddFeed))).

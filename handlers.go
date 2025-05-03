@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"gator/internal/config"
 	"gator/internal/database"
+	"sort"
 	"time"
+
+	"github.com/mmcdole/gofeed"
 )
 
 type state struct {
@@ -107,17 +110,49 @@ func handlerUsers(s *state, cmd command) error {
 	return nil
 }
 
-func handlerAggregate(s *state, cmd command) error {
+func handlerAggregate(s *state, cmd command, user database.User) error {
 	if len(cmd.parameters) != 0 {
 		return errors.New("agg command expects 0 parameters")
 	}
 
-	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	follows, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Print(feed, "\n")
+	followingFeeds := []*gofeed.Feed{}
+	items := []struct {
+		Source  string
+		Authors []*gofeed.Person
+		Item    gofeed.Item
+	}{}
+	for _, item := range follows {
+		feed, err := fetchFeed(context.Background(), item.FeedUrl)
+		if err != nil {
+			return err
+		}
+		followingFeeds = append(followingFeeds, feed)
+	}
+
+	for _, feed := range followingFeeds {
+		for _, item := range feed.Items {
+			items = append(items, struct {
+				Source  string
+				Authors []*gofeed.Person
+				Item    gofeed.Item
+			}{
+				Source:  feed.Title,
+				Authors: feed.Authors,
+				Item:    *item,
+			})
+		}
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].Item.PublishedParsed.Before(*items[j].Item.PublishedParsed)
+	})
+
+	PrintFeedsItems(items)
 
 	return nil
 }
@@ -127,10 +162,6 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 		return errors.New("addfeed command expects 2 parameters: [name] [url]")
 	}
 
-	// user, err := s.db.GetUser(context.Background(), s.config.Current_user_name)
-	// if err != nil {
-	// 	return err
-	// }
 	feedName := cmd.parameters[0]
 	url := cmd.parameters[1]
 
