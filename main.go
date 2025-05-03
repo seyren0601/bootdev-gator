@@ -63,7 +63,10 @@ func main() {
 				middlewareLoggedIn(handlerFollow))).
 		register("following",
 			middlewareLogging(
-				middlewareLoggedIn(handlerFollowing)))
+				middlewareLoggedIn(handlerFollowing))).
+		register("unfollow",
+			middlewareLogging(
+				middlewareLoggedIn(handlerUnfollow)))
 
 	// Create command instance based on args
 	cmd := command{
