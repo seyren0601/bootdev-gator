@@ -18,7 +18,12 @@ FROM users
 WHERE id = $1;
 
 -- name: DatabaseReset :exec
-DELETE FROM users;
+WITH CTE1 AS(
+    DELETE FROM users
+), CTE2 AS (
+    DELETE FROM feeds
+)
+SELECT * FROM users;
 
 -- name: GetUsers :many
 SELECT *

@@ -41,7 +41,12 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const databaseReset = `-- name: DatabaseReset :exec
-DELETE FROM users
+WITH CTE1 AS(
+    DELETE FROM users
+), CTE2 AS (
+    DELETE FROM feeds
+)
+SELECT id, created_at, updated_at, name FROM users
 `
 
 func (q *Queries) DatabaseReset(ctx context.Context) error {
