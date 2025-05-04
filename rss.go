@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"strings"
+	"gator/internal/database"
+	"log"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -19,24 +21,33 @@ func fetchFeed(ctx context.Context, feedUrl string) (*gofeed.Feed, error) {
 	return feed, nil
 }
 
-func PrintFeedsItems(feeds []struct {
-	Source  string
-	Authors []*gofeed.Person
-	Item    gofeed.Item
-}) {
-	fmt.Print("\033[H\033[2J")
-	for _, feed := range feeds {
-		fmt.Printf("Source: %s\n", feed.Source)
-		fmt.Printf("Author(s): ")
-		for _, author := range feed.Authors {
-			fmt.Printf("%s ", author.Name)
-		}
-		if strings.Contains(feed.Source, "reddit") {
-			fmt.Printf("\nSubreddit: %s", feed.Item.Categories[0])
-		}
-		fmt.Printf("\nPublished at: %s\n"+
-			"Title: %s\n"+
-			"Url: %s\n\n",
-			feed.Item.PublishedParsed.UTC().Local().Format(time.RFC1123Z), feed.Item.Title, feed.Item.Link)
+func scrapeFeeds(s *state, user database.User) error {
+	nextFeed, err := s.db.GetNextFeedToFetch(context.Background(), user.ID)
+	if err != nil {
+		return err
 	}
+
+	err = s.db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{
+		ID: nextFeed.ID,
+		LastFetchedAt: sql.NullTime{
+			Time:  time.Now(),
+			Valid: true,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	feed, err := fetchFeed(context.Background(), nextFeed.Url)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Fetched feed from: %s\n", feed.Title)
+
+	for _, item := range feed.Items {
+		fmt.Printf("\t* %s\n", item.Title)
+	}
+
+	return nil
 }
