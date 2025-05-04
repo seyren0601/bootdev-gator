@@ -14,7 +14,7 @@ Installation steps:
   - dir into schema folder: /sql/schema
   - migrate neccessary tables with [goose up] (after setting up environment variables for goose)
 
-Supported commands (call the app with 'gator [command]'):
+Supported commands (call the app with 'bootdev-gator [command]'):
   - reset: reset the database
   - users: list all registered users
   - register [username]: register user and login
