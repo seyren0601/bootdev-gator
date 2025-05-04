@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"gator/internal/config"
 	"gator/internal/database"
+	"strconv"
 	"time"
 )
 
@@ -107,7 +108,7 @@ func handlerUsers(s *state, cmd command) error {
 	return nil
 }
 
-func handlerAggregate(s *state, cmd command, user database.User) error {
+func handlerAggregate(s *state, cmd command) error {
 	if len(cmd.parameters) != 1 {
 		return errors.New("agg command expects 1 parameters: [time_between_reqs]")
 	}
@@ -119,7 +120,7 @@ func handlerAggregate(s *state, cmd command, user database.User) error {
 
 	ticker := time.NewTicker(time_between_reqs)
 	for ; ; <-ticker.C {
-		err := scrapeFeeds(s, user)
+		err := scrapeFeeds(s)
 		if err != nil {
 			return err
 		}
@@ -258,6 +259,42 @@ func handlerUnfollow(s *state, cmd command, user database.User) error {
 	}
 
 	fmt.Printf("You (%s) have unfollowed '%s' at '%s'\n", user.Name, feed.Name.String, feed.Url)
+
+	return nil
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	var limit int = 2
+	var err error
+	if len(cmd.parameters) > 0 {
+		limit, err = strconv.Atoi(cmd.parameters[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  int32(limit),
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(posts) < 1 {
+		return errors.New("you aren't following any feed")
+	}
+
+	// print from posts[limit - 1] to posts[0]
+	// so that the last post printed (on console) is the most recent
+	for i := limit - 1; i >= 0; i-- {
+		post := posts[i]
+		fmt.Printf(`Source: %s
+	Title: %s
+	Published at: %s
+
+`, post.Source.String, post.Title, post.PublishedAt.Local().Format(time.ANSIC))
+	}
 
 	return nil
 }

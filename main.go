@@ -52,8 +52,7 @@ func main() {
 		register("users",
 			middlewareLogging(handlerUsers)).
 		register("agg",
-			middlewareLogging(
-				middlewareLoggedIn(handlerAggregate))).
+			middlewareLogging(handlerAggregate)).
 		register("addfeed",
 			middlewareLogging(
 				middlewareLoggedIn(handlerAddFeed))).
@@ -67,7 +66,10 @@ func main() {
 				middlewareLoggedIn(handlerFollowing))).
 		register("unfollow",
 			middlewareLogging(
-				middlewareLoggedIn(handlerUnfollow)))
+				middlewareLoggedIn(handlerUnfollow))).
+		register("browse",
+			middlewareLogging(
+				middlewareLoggedIn(handlerBrowse)))
 
 	// Create command instance based on args
 	cmd := command{
