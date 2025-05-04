@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"gator/internal/database"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -21,8 +21,8 @@ func fetchFeed(ctx context.Context, feedUrl string) (*gofeed.Feed, error) {
 	return feed, nil
 }
 
-func scrapeFeeds(s *state, user database.User) error {
-	nextFeed, err := s.db.GetNextFeedToFetch(context.Background(), user.ID)
+func scrapeFeeds(s *state) error {
+	nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
 	if err != nil {
 		return err
 	}
@@ -46,8 +46,23 @@ func scrapeFeeds(s *state, user database.User) error {
 	log.Printf("Fetched feed from: %s\n", feed.Title)
 
 	for _, item := range feed.Items {
-		fmt.Printf("\t* %s\n", item.Title)
+		_, err := s.db.CreatePost(context.Background(), database.CreatePostParams{
+			CreatedAt:   time.Now(),
+			Title:       item.Title,
+			Url:         item.Link,
+			Description: item.Description,
+			PublishedAt: *item.PublishedParsed,
+			FeedID:      nextFeed.ID,
+		})
+		if err != nil {
+			if strings.Contains(err.Error(), "unique") {
+				// ignore fetched post
+			} else {
+				log.Println(err)
+			}
+		}
 	}
+	log.Println("Saved posts into database.")
 
 	return nil
 }
