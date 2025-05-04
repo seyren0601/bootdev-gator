@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"gator/internal/config"
-	"gator/internal/database"
 	"strconv"
 	"time"
+
+	"github.com/seyren0601/bootdev-gator/internal/config"
+	"github.com/seyren0601/bootdev-gator/internal/database"
 )
 
 type state struct {

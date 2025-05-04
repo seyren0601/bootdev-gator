@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
-	"gator/internal/database"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/seyren0601/bootdev-gator/internal/database"
 
 	"github.com/mmcdole/gofeed"
 )

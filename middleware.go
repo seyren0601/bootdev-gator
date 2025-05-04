@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"gator/internal/database"
 	"log"
 	"os"
+
+	"github.com/seyren0601/bootdev-gator/internal/database"
 )
 
 func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {

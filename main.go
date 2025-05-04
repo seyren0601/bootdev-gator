@@ -3,9 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"gator/internal/config"
-	"gator/internal/database"
 	"os"
+
+	"github.com/seyren0601/bootdev-gator/internal/config"
+	"github.com/seyren0601/bootdev-gator/internal/database"
 
 	_ "github.com/lib/pq"
 )
